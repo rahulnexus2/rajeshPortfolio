@@ -30,8 +30,26 @@ const __dirname = path.dirname(__filename);
 app.use(helmetMiddleware);
 
 // Config CORS
+const allowedOrigins = [
+  'https://rajesh-portfolio-amber.vercel.app',
+  'https://rajesh-portfolio-amber.vercel.app/'
+];
+
 const corsOptions = {
-  origin: true, // Allow all origins for development, can lock down in production
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, postman, curl)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      /^https?:\/\/localhost(:\d+)?$/.test(origin) || 
+                      /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+                      
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
