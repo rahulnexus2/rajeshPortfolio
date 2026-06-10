@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 
 const AdminContext = createContext();
 
@@ -21,9 +21,7 @@ export const AdminProvider = ({ children }) => {
         return;
       }
       try {
-        const response = await axios.get('/api/admin/verify', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get('/admin/verify');
         if (response.data.valid) {
           setIsAdmin(true);
         } else {
@@ -43,7 +41,7 @@ export const AdminProvider = ({ children }) => {
 
   const login = async (secretKey) => {
     try {
-      const response = await axios.post('/api/admin/login', { secretKey });
+      const response = await api.post('/admin/login', { secretKey });
       const newToken = response.data.token;
       
       localStorage.setItem('adminToken', newToken);

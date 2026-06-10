@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://rajeshportfolio-m4xv.onrender.com/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://rajeshportfolio-m4xv.onrender.com/uploads/:path*"
+    }
+  ]
+}
