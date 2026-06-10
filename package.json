@@ -1,0 +1,24 @@
+{
+  "name": "rajesh-portfolio-cms",
+  "version": "1.0.0",
+  "description": "Full Stack Developer Portfolio CMS with dynamic inline editing, asset uploading, reordering, and analytics metrics.",
+  "scripts": {
+    "install-backend": "npm install --prefix backend",
+    "install-frontend": "npm install --prefix frontend --legacy-peer-deps",
+    "install-all": "npm run install-backend && npm run install-frontend",
+    "build-frontend": "npm run build --prefix frontend",
+    "build": "npm run install-all && npm run build-frontend",
+    "start": "node backend/server.js",
+    "db:seed": "npm run db:seed --prefix backend"
+  },
+  "keywords": [
+    "portfolio",
+    "react",
+    "express",
+    "mongodb",
+    "framer-motion",
+    "tailwind"
+  ],
+  "author": "Rajesh Rautela",
+  "license": "ISC"
+}
