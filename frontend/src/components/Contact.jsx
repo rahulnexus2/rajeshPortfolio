@@ -1,22 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { contactAPI } from '../utils/api';
-import { FaPaperPlane, FaSpinner, FaCheckCircle, FaExclamationCircle, FaMapMarkerAlt, FaEnvelope, FaPhone } from 'react-icons/fa';
+import { contactAPI, portfolioAPI } from '../utils/api';
+import { useAdmin } from '../context/AdminContext';
+import { 
+  FaPaperPlane, FaSpinner, FaCheckCircle, FaExclamationCircle, 
+  FaMapMarkerAlt, FaEnvelope, FaPhone, FaEdit, FaCheck, FaTimes 
+} from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Contact = () => {
+const Contact = ({ data, onUpdate }) => {
+  const { editMode } = useAdmin();
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    location: '',
+    email: '',
+    phone: ''
+  });
+
+  useEffect(() => {
+    if (data) {
+      setFormData({
+        location: data.location || '',
+        email: data.email || '',
+        phone: data.phone || ''
+      });
+    }
+  }, [data]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    try {
+      const response = await portfolioAPI.update(formData);
+      if (onUpdate) {
+        onUpdate(response.settings);
+      }
+      setIsEditing(false);
+    } catch (error) {
+      alert('Save failed.');
+    }
+  };
+
+  const handleCancel = () => {
+    if (data) {
+      setFormData({
+        location: data.location || '',
+        email: data.email || '',
+        phone: data.phone || ''
+      });
+    }
+    setIsEditing(false);
+  };
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const [submitting, setSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (submitData) => {
     setSubmitting(true);
     setSubmitStatus(null);
     setStatusMessage('');
 
     try {
-      const response = await contactAPI.submit(data);
+      const response = await contactAPI.submit(submitData);
       setSubmitStatus('success');
       setStatusMessage(response.message || 'Your message has been sent successfully!');
       reset();
@@ -59,22 +109,82 @@ const Contact = () => {
               If you have any questions, role requirements, or project opportunities, fill out the form or reach out directly.
             </p>
 
-            <div className="space-y-4 pt-6 border-t border-white/5 max-w-sm">
-              <div className="flex items-center gap-3.5 group">
-                <span className="text-slate-500 group-hover:text-indigo-400 transition-colors"><FaMapMarkerAlt size={12} /></span>
-                <span className="text-xs text-slate-400 font-sans font-medium">New Delhi, India</span>
+            {editMode && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-slate-900/60 text-slate-400 border border-white/5 hover:border-white/10 hover:text-white flex items-center gap-1.5 transition-colors self-start shadow-sm"
+              >
+                <FaEdit className="text-indigo-400" /> Edit Contact Info
+              </button>
+            )}
+
+            {isEditing ? (
+              <div className="space-y-4 glass-panel p-6 rounded-2xl shadow-xl shadow-black/30 max-w-sm">
+                <h4 className="text-[10px] font-bold text-slate-200 border-b border-white/5 pb-2 font-display uppercase tracking-wider">Configure Contact Info</h4>
+                
+                <div>
+                  <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Location</label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className="cyber-input py-2 text-xs"
+                    placeholder="e.g. New Delhi, India"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="cyber-input py-2 text-xs"
+                    placeholder="e.g. rajesh@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="cyber-input py-2 text-xs"
+                    placeholder="e.g. +91 9876543210"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-2.5 border-t border-white/5">
+                  <button onClick={handleSave} className="btn-success text-[10px] px-4 py-2">
+                    <FaCheck size={9} /> Save
+                  </button>
+                  <button onClick={handleCancel} className="btn-secondary text-[10px] px-4 py-2">
+                    <FaTimes size={9} /> Cancel
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3.5 group">
-                <span className="text-slate-500 group-hover:text-indigo-400 transition-colors"><FaEnvelope size={12} /></span>
-                <span className="text-xs text-slate-400 font-sans font-medium">
-                  <a href="mailto:rajesh@example.com" className="hover:text-indigo-300 transition-colors hover:underline">rajesh@example.com</a>
-                </span>
+            ) : (
+              <div className="space-y-4 pt-6 border-t border-white/5 max-w-sm">
+                <div className="flex items-center gap-3.5 group">
+                  <span className="text-slate-500 group-hover:text-indigo-400 transition-colors"><FaMapMarkerAlt size={12} /></span>
+                  <span className="text-xs text-slate-400 font-sans font-medium">{data?.location || 'New Delhi, India'}</span>
+                </div>
+                <div className="flex items-center gap-3.5 group">
+                  <span className="text-slate-500 group-hover:text-indigo-400 transition-colors"><FaEnvelope size={12} /></span>
+                  <span className="text-xs text-slate-400 font-sans font-medium">
+                    <a href={`mailto:${data?.email || 'rajesh@example.com'}`} className="hover:text-indigo-300 transition-colors hover:underline">{data?.email || 'rajesh@example.com'}</a>
+                  </span>
+                </div>
+                <div className="flex items-center gap-3.5 group">
+                  <span className="text-slate-500 group-hover:text-indigo-400 transition-colors"><FaPhone size={12} /></span>
+                  <span className="text-xs text-slate-400 font-sans font-medium">{data?.phone || '+91 9876543210'}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3.5 group">
-                <span className="text-slate-500 group-hover:text-indigo-400 transition-colors"><FaPhone size={12} /></span>
-                <span className="text-xs text-slate-400 font-sans font-medium">+91 9876543210</span>
-              </div>
-            </div>
+            )}
           </motion.div>
 
           {/* Right Column: Premium Contact Form */}

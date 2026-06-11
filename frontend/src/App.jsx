@@ -32,7 +32,7 @@ const PortfolioHome = ({
       <About data={portfolioData} onUpdate={setPortfolioData} />
       <Projects projectsList={projectsData} onUpdate={setProjectsData} />
       <Skills skillsList={skillsData} onUpdate={setSkillsData} />
-      <Contact />
+      <Contact data={portfolioData} onUpdate={setPortfolioData} />
       <Footer data={portfolioData} onUpdate={setPortfolioData} onOpenLogin={onOpenLogin} />
     </>
   );
