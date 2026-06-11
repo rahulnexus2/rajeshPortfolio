@@ -2,9 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { apiLimiter, helmetMiddleware } from './middleware/security.js';
+import Media from './models/Media.js';
 
 // Route Imports
 import portfolioRoutes from './routes/portfolio.js';
@@ -61,11 +63,42 @@ app.use(express.urlencoded({ extended: true }));
 // Apply general rate limiter
 app.use('/api', apiLimiter);
 
-// Serve static upload directory files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded assets dynamically from database, with disk fallback
+app.get('/uploads/:filename', async (req, res, next) => {
+  try {
+    const { filename } = req.params;
+    const sanitizedFilename = path.basename(filename);
+    
+    // 1. Try to find the file in the database
+    const media = await Media.findOne({ fileName: sanitizedFilename });
+    if (media) {
+      const buffer = Buffer.from(media.data, 'base64');
+      res.setHeader('Content-Type', media.mimeType);
+      res.setHeader('Content-Length', buffer.length);
+      return res.send(buffer);
+    }
+    
+    // 2. Fallback to checking local files (both backend/uploads and root/uploads)
+    const localPaths = [
+      path.join(__dirname, 'uploads', sanitizedFilename),
+      path.join(__dirname, '../uploads', sanitizedFilename)
+    ];
+    
+    for (const localPath of localPaths) {
+      if (fs.existsSync(localPath)) {
+        return res.sendFile(localPath);
+      }
+    }
+    
+    return res.status(404).json({ message: 'File not found' });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Routes
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/settings', portfolioRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/contact', contactRoutes);

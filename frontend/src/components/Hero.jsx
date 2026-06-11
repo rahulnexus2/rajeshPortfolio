@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import { portfolioAPI, mediaAPI, analyticsAPI } from '../utils/api';
-import { FaDownload, FaEnvelope, FaEdit, FaCheck, FaTimes, FaCamera, FaFilePdf } from 'react-icons/fa';
+import { FaDownload, FaEnvelope, FaEdit, FaCheck, FaTimes, FaCamera, FaFilePdf, FaSpinner } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
 const Hero = ({ data, onUpdate }) => {
   const { editMode } = useAdmin();
   const [isEditing, setIsEditing] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState('');
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeError, setResumeError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     title: '',
@@ -36,14 +40,39 @@ const Hero = ({ data, onUpdate }) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (type === 'profileImage') {
+      setImageUploading(true);
+      setImageError('');
+    } else {
+      setResumeUploading(true);
+      setResumeError('');
+    }
+
     const uploadFormData = new FormData();
-    uploadFormData.append('file', file);
 
     try {
-      const response = await mediaAPI.upload(uploadFormData);
-      setFormData(prev => ({ ...prev, [type]: response.url }));
+      if (type === 'profileImage') {
+        uploadFormData.append('profileImage', file);
+        const response = await portfolioAPI.uploadImage(uploadFormData);
+        setFormData(prev => ({ ...prev, profileImage: response.url }));
+      } else {
+        uploadFormData.append('resume', file);
+        const response = await portfolioAPI.uploadResume(uploadFormData);
+        setFormData(prev => ({ ...prev, resumeUrl: response.url }));
+      }
     } catch (error) {
-      alert('Upload failed.');
+      const errMsg = error.response?.data?.message || 'Upload failed.';
+      if (type === 'profileImage') {
+        setImageError(errMsg);
+      } else {
+        setResumeError(errMsg);
+      }
+    } finally {
+      if (type === 'profileImage') {
+        setImageUploading(false);
+      } else {
+        setResumeUploading(false);
+      }
     }
   };
 
@@ -146,17 +175,32 @@ const Hero = ({ data, onUpdate }) => {
                     onChange={handleInputChange}
                     className="cyber-input py-2 text-xs flex-1"
                     placeholder="/uploads/resume.pdf"
+                    disabled={resumeUploading}
                   />
-                  <label className="cursor-pointer bg-slate-950 hover:bg-slate-900 text-slate-200 border border-white/5 px-3 py-2 rounded-xl text-[10px] font-semibold flex items-center gap-1.5 transition-colors">
-                    <FaFilePdf className="text-rose-500" /> Upload
-                    <input 
-                      type="file" 
-                      accept=".pdf"
-                      onChange={(e) => handleFileUpload(e, 'resumeUrl')}
-                      className="hidden" 
-                    />
+                  <label className={`cursor-pointer bg-slate-950 hover:bg-slate-900 text-slate-200 border border-white/5 px-3 py-2 rounded-xl text-[10px] font-semibold flex items-center gap-1.5 transition-colors ${resumeUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    {resumeUploading ? (
+                      <>
+                        <FaSpinner size={10} className="animate-spin text-indigo-400" /> Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <FaFilePdf className="text-rose-500" /> Upload
+                        <input 
+                          type="file" 
+                          accept=".pdf"
+                          onChange={(e) => handleFileUpload(e, 'resumeUrl')}
+                          className="hidden" 
+                          disabled={resumeUploading}
+                        />
+                      </>
+                    )}
                   </label>
                 </div>
+                {resumeError && (
+                  <p className="text-rose-500 text-[10px] mt-1.5 font-semibold bg-rose-500/10 border border-rose-500/20 py-1.5 px-3 rounded-lg">
+                    {resumeError}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center gap-3 pt-2.5 border-t border-white/5">
@@ -278,19 +322,34 @@ const Hero = ({ data, onUpdate }) => {
 
                 {/* Upload Overlay */}
                 {isEditing && (
-                  <label className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 cursor-pointer opacity-0 hover:opacity-100 transition-opacity duration-150 text-slate-300">
-                    <FaCamera size={18} className="text-indigo-400 animate-bounce" />
-                    <span className="text-[9px] font-bold uppercase tracking-wider font-sans">Upload Photo</span>
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'profileImage')}
-                      className="hidden" 
-                    />
+                  <label className={`absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-opacity duration-150 text-slate-300 ${imageUploading ? 'opacity-100' : 'opacity-0 hover:opacity-100'}`}>
+                    {imageUploading ? (
+                      <>
+                        <FaSpinner size={18} className="text-indigo-400 animate-spin" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider font-sans">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaCamera size={18} className="text-indigo-400 animate-bounce" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider font-sans">Upload Photo</span>
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(e, 'profileImage')}
+                          className="hidden" 
+                          disabled={imageUploading}
+                        />
+                      </>
+                    )}
                   </label>
                 )}
               </div>
             </motion.div>
+            {imageError && (
+              <p className="text-rose-500 text-[10px] mt-2 font-semibold text-center bg-rose-500/10 border border-rose-500/20 py-1.5 px-3 rounded-lg max-w-[280px] mx-auto">
+                {imageError}
+              </p>
+            )}
           </motion.div>
         </div>
 

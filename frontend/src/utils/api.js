@@ -21,7 +21,13 @@ api.interceptors.request.use(
 
 export const portfolioAPI = {
   get: () => api.get('/portfolio').then(res => res.data),
-  update: (data) => api.put('/portfolio', data).then(res => res.data)
+  update: (data) => api.put('/portfolio', data).then(res => res.data),
+  uploadImage: (formData) => api.post('/settings/upload/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(res => res.data),
+  uploadResume: (formData) => api.post('/settings/upload/resume', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(res => res.data)
 };
 
 export const skillsAPI = {
