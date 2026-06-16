@@ -45,6 +45,22 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
+  // Render keepalive - UptimeRobot ping
+  useEffect(() => {
+    const preWarm = async () => {
+      try {
+        const backendUrl = import.meta.env.VITE_API_BASE_URL 
+          ? import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, '') 
+          : '';
+        const url = backendUrl ? `${backendUrl}/health` : '/api/health';
+        await fetch(url);
+      } catch (error) {
+        // Catch all errors silently
+      }
+    };
+    preWarm();
+  }, []);
+
   // Fetch portfolio data from database APIs on mount
   useEffect(() => {
     const fetchPortfolioData = async () => {

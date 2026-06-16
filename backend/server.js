@@ -8,6 +8,9 @@ import connectDB from './config/db.js';
 import { apiLimiter, helmetMiddleware } from './middleware/security.js';
 import Media from './models/Media.js';
 
+// Render keepalive - UptimeRobot ping
+import https from 'https';
+
 // Route Imports
 import portfolioRoutes from './routes/portfolio.js';
 import skillsRoutes from './routes/skills.js';
@@ -95,6 +98,28 @@ app.get('/uploads/:filename', async (req, res, next) => {
     next(error);
   }
 });
+
+// Render keepalive - UptimeRobot ping
+app.get('/health', (req, res) => {
+  res.json({ status: "ok", timestamp: Date.now() });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: "ok", timestamp: Date.now() });
+});
+
+const selfPing = () => {
+  const backendUrl = process.env.RENDER_EXTERNAL_URL || 'https://rajeshportfolio-m4xv.onrender.com';
+  https.get(`${backendUrl}/health`, (res) => {
+    // Keepalive ping succeeded
+  }).on('error', (err) => {
+    // Catch keepalive ping errors silently
+  });
+};
+if (process.env.NODE_ENV === 'production' || process.env.RENDER === 'true') {
+  setInterval(selfPing, 600000); // 10 minutes
+  setTimeout(selfPing, 5000); // initial ping after 5 seconds to warm up
+}
 
 // Routes
 app.use('/api/portfolio', portfolioRoutes);
