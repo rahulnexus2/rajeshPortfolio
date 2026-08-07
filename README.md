@@ -92,7 +92,7 @@ The client compiles and starts at http://localhost:5173.
 1. **Access Public View**: Navigate to `http://localhost:5173`. Default portfolio info is seeded automatically from the backend on load.
 2. **Contact Recruiter Form**: Enter your details in the contact form. Successful submissions will persist in the MongoDB database.
 3. **Trigger Inline CMS Editor**: Scroll down to the Footer copyright notice. **Double-click** the text `© 2026 Rajesh Rautela. All rights reserved.`.
-4. **Login**: Enter the admin secret key configured in the backend `.env` file (Default: `Rajesh@CMS2026!`).
+4. **Login**: Enter the admin secret key configured in the backend `.env` file .
 5. **Inline Editing Mode**:
    - Each section (Hero, About, Skills, Projects, Footer) displays quick edit options.
    - Edit titles, taglines, biographies, or contacts.
